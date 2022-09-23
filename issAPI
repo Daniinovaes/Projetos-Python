@@ -1,0 +1,58 @@
+import time
+import smtplib
+import requests
+import datetime as dt
+
+minha_lat = 1
+minha_lng = 1
+meu_email = "teste@gmail.com"
+meu_password = "1234"
+
+
+def lat_lng_no_limite():
+    resposta = requests.get("http://api.open-notify.org/iss-now.json")
+    resposta.raise_for_status()
+    dados = resposta.json()
+
+    iss_lat = float(dados["iss_position"]["latitude"])
+    iss_lng = float(dados["iss_position"]["longitude"])
+
+# Posição está +-5 graus de diferença do ISS
+
+    if minha_lat-5 <= iss_lat <= minha_lat+5 and minha_lng-5 <= iss_lng <= minha_lng+5:
+        return True
+
+
+def de_noite():
+    parametros = {
+        "lat": minha_lat,
+        "lng": minha_lng,
+        "formatted": 0,
+    }
+    resposta = requests.get("http://api.sunrise-sunset.org/json", params=parametros)
+    resposta.raise_for_status()
+    dados = resposta.json()
+
+    nasce_sol = dados["results"]["sunrise"]
+    hora_nasce_sol = int(nasce_sol.split("T")[1].split(":")[0])
+    por_sol = dados["results"]["sunset"]
+    hora_por_sol = int(por_sol.split("T")[1].split(":")[0])
+    hora_agora = dt.datetime.now()
+    hora = int(hora_agora.hour)
+
+    if hora >= hora_por_sol or hora <= hora_nasce_sol:
+        return True
+
+
+while True:
+    time.sleep(60)
+    if lat_lng_no_limite() and de_noite():
+        conexao = smtplib.SMTP("smtp.gmail.com")
+        conexao.starttls()
+        conexao.login(meu_email, meu_password)
+        conexao.sendmail(
+            from_addr=meu_email,
+            to_addrs=meu_email,
+            msg=f"Subject:Olhe para cima para ver o avião.\n\nO Avião está acima de você no céu."
+        )
+        
