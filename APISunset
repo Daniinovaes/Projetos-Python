@@ -1,0 +1,25 @@
+import requests
+import datetime as dt
+
+
+minha_lat=1
+minha_lng=1
+
+parametros = {
+    "lat": minha_lat,
+    "lng": minha_lng,
+    "formatted": 0,
+}
+
+resposta = requests.get("http://api.sunrise-sunset.org/json", params=parametros)
+resposta.raise_for_status()
+dados = resposta.json()
+nasce_sol = dados["results"]["sunrise"]
+hora_nasce_sol = nasce_sol.split("T")[1].split(":")[0]
+por_sol = dados["results"]["sunset"]
+hora_por_sol = por_sol.split("T")[1].split(":")[0]
+
+hora_agora = dt.datetime.now()
+hora =hora_agora.hour
+
+print("O sol nasce de "+str(hora_nasce_sol)+". O sol se põe de "+str(hora_por_sol)+". Agora são "+str(hora)+".")
